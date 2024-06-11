@@ -363,6 +363,38 @@ func (app *BaseApp) SetStoreMetrics(gatherer metrics.StoreMetrics) {
 	app.cms.SetMetrics(gatherer)
 }
 
+func (app *BaseApp) SetCacheTransactionInit(ci sdk.CacheTransactionInit) {
+	if app.sealed {
+		panic("SetCacheTransactionInit() on sealed BaseApp")
+	}
+
+	app.cacheTransactionInit = ci
+}
+
+func (app *BaseApp) SetCacheTransactionCommitToDB(cc sdk.CacheTransactionCommitToDB) {
+	if app.sealed {
+		panic("SetCacheTransactionCommitToDB() on sealed BaseApp")
+	}
+
+	app.cacheTransactionCommitToDB = cc
+}
+
+func (app *BaseApp) SetCacheTransactionCommitToCache(cc sdk.CacheTransactionCommitToCache) {
+	if app.sealed {
+		panic("SetCacheTransactionCommitToCache() on sealed BaseApp")
+	}
+
+	app.cacheTransactionCommitToCache = cc
+}
+
+func (app *BaseApp) SetCacheTransactionClear(cc sdk.CacheTransactionClear) {
+	if app.sealed {
+		panic("SetCacheTransactionClear() on sealed BaseApp")
+	}
+
+	app.cacheTransactionClear = cc
+}
+
 // SetStreamingManager sets the streaming manager for the BaseApp.
 func (app *BaseApp) SetStreamingManager(manager storetypes.StreamingManager) {
 	app.streamingManager = manager

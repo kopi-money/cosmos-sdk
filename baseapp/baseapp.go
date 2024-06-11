@@ -88,6 +88,11 @@ type BaseApp struct {
 	prepareCheckStater sdk.PrepareCheckStater         // logic to run during commit using the checkState
 	precommiter        sdk.Precommiter                // logic to run during commit using the deliverState
 
+	cacheTransactionInit          sdk.CacheTransactionInit
+	cacheTransactionCommitToDB    sdk.CacheTransactionCommitToDB
+	cacheTransactionCommitToCache sdk.CacheTransactionCommitToCache
+	cacheTransactionClear         sdk.CacheTransactionClear
+
 	addrPeerFilter sdk.PeerFilter // filter peers by address and port
 	idPeerFilter   sdk.PeerFilter // filter peers by node ID
 	fauxMerkleMode bool           // if true, IAVL MountStores uses MountStoresDB for simulation speed.
@@ -834,7 +839,9 @@ func (app *BaseApp) runTx(mode execMode, txBytes []byte) (gInfo sdk.GasInfo, res
 		if r := recover(); r != nil {
 			recoveryMW := newOutOfGasRecoveryMiddleware(gasWanted, ctx, app.runTxRecoveryMiddleware)
 			err, result = processRecovery(r, recoveryMW), nil
-			ctx.Logger().Error("panic recovered in runTx", "err", err)
+
+			// Removed this output because showing a panic if a user sends too little gas doesn't seem necessary
+			// ctx.Logger().Error("panic recovered in runTx", "err", err)
 		}
 
 		gInfo = sdk.GasInfo{GasWanted: gasWanted, GasUsed: ctx.GasMeter().GasConsumed()}
@@ -940,6 +947,16 @@ func (app *BaseApp) runTx(mode execMode, txBytes []byte) (gInfo sdk.GasInfo, res
 		}
 	}
 
+	if app.cacheTransactionInit != nil {
+		ctx = app.cacheTransactionInit(ctx, mode == execModeFinalize)
+
+		defer func() {
+			if app.cacheTransactionClear != nil {
+				app.cacheTransactionClear(ctx)
+			}
+		}()
+	}
+
 	// Create a new Context based off of the existing Context with a MultiStore branch
 	// in case message processing fails. At this point, the MultiStore
 	// is a branch of a branch.
@@ -976,8 +993,19 @@ func (app *BaseApp) runTx(mode execMode, txBytes []byte) (gInfo sdk.GasInfo, res
 
 	if err == nil {
 		if mode == execModeFinalize {
+			if app.cacheTransactionCommitToDB != nil {
+				if err = app.cacheTransactionCommitToDB(ctx); err != nil {
+					return gInfo, nil, anteEvents, errors.Wrap(err, "could not commit changes to db")
+				}
+			}
+
 			// When block gas exceeds, it'll panic and won't commit the cached store.
 			consumeBlockGas()
+
+			// Commit changes in cache, also writing them to storage because `ms.Cache.Write()`
+			if app.cacheTransactionCommitToCache != nil {
+				app.cacheTransactionCommitToCache(ctx)
+			}
 
 			msCache.Write()
 		}

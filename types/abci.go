@@ -74,3 +74,8 @@ type ResponsePreBlock struct {
 func (r ResponsePreBlock) IsConsensusParamsChanged() bool {
 	return r.ConsensusParamsChanged
 }
+
+type CacheTransactionInit func(ctx Context, finalizing bool) Context
+type CacheTransactionCommitToDB func(ctx Context) error
+type CacheTransactionCommitToCache func(ctx Context)
+type CacheTransactionClear func(ctx Context)
