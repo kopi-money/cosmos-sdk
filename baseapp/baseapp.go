@@ -88,7 +88,7 @@ type BaseApp struct {
 	prepareCheckStater sdk.PrepareCheckStater         // logic to run during commit using the checkState
 	precommiter        sdk.Precommiter                // logic to run during commit using the deliverState
 
-	cacheTransactionInit          sdk.CacheTransactionInit
+	CacheTransactionInit          sdk.CacheTransactionInit
 	cacheTransactionCommitToDB    sdk.CacheTransactionCommitToDB
 	cacheTransactionCommitToCache sdk.CacheTransactionCommitToCache
 	cacheTransactionRollback      sdk.CacheTransactionRollback
@@ -842,8 +842,8 @@ func (app *BaseApp) runTx(mode execMode, txBytes []byte) (gInfo sdk.GasInfo, res
 		return gInfo, nil, nil, errorsmod.Wrap(sdkerrors.ErrOutOfGas, "no block gas left to run tx")
 	}
 
-	if app.cacheTransactionInit != nil {
-		ctx = app.cacheTransactionInit(ctx, mode == execModeFinalize)
+	if app.CacheTransactionInit != nil {
+		ctx = app.CacheTransactionInit(ctx, mode == execModeFinalize)
 
 		defer func() {
 			if app.cacheTransactionClear != nil {

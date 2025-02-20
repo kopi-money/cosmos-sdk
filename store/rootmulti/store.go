@@ -536,6 +536,10 @@ func (rs *Store) WorkingHash() []byte {
 		return storeInfos[i].Name < storeInfos[j].Name
 	})
 
+	for _, storeInfo := range storeInfos {
+		fmt.Println(fmt.Sprintf("%v: %x", storeInfo.Name, storeInfo.GetHash()))
+	}
+
 	return types.CommitInfo{StoreInfos: storeInfos}.Hash()
 }
 
