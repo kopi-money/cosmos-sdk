@@ -88,7 +88,7 @@ type BaseApp struct {
 	prepareCheckStater sdk.PrepareCheckStater         // logic to run during commit using the checkState
 	precommiter        sdk.Precommiter                // logic to run during commit using the deliverState
 
-	cacheTransactionInit          sdk.CacheTransactionInit
+	CacheTransactionInit          sdk.CacheTransactionInit
 	cacheTransactionCommitToDB    sdk.CacheTransactionCommitToDB
 	cacheTransactionCommitToCache sdk.CacheTransactionCommitToCache
 	cacheTransactionRollback      sdk.CacheTransactionRollback
