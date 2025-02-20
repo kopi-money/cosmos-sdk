@@ -373,7 +373,7 @@ func (app *BaseApp) SetCacheTransactionInit(ci sdk.CacheTransactionInit) {
 		panic("SetCacheTransactionInit() on sealed BaseApp")
 	}
 
-	app.cacheTransactionInit = ci
+	app.CacheTransactionInit = ci
 }
 
 func (app *BaseApp) SetCacheTransactionCommitToDB(cc sdk.CacheTransactionCommitToDB) {
