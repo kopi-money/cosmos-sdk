@@ -842,8 +842,8 @@ func (app *BaseApp) runTx(mode execMode, txBytes []byte) (gInfo sdk.GasInfo, res
 		return gInfo, nil, nil, errorsmod.Wrap(sdkerrors.ErrOutOfGas, "no block gas left to run tx")
 	}
 
-	if app.cacheTransactionInit != nil {
-		ctx = app.cacheTransactionInit(ctx, mode == execModeFinalize)
+	if app.CacheTransactionInit != nil {
+		ctx = app.CacheTransactionInit(ctx, mode == execModeFinalize)
 
 		defer func() {
 			if app.cacheTransactionClear != nil {
