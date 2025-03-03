@@ -141,6 +141,10 @@ func NewNestedMapCache[K1, K2 ordered, V any](sb *collections.SchemaBuilder, pre
 	return mc
 }
 
+func (nmc *NestedMapCache[K1, K2, V]) OuterKeys() []K1 {
+	return nmc.cache.OuterKeys()
+}
+
 func (nmc *NestedMapCache[K1, K2, V]) NumRunningTransactions() int {
 	return len(nmc.transactions.transactions)
 }

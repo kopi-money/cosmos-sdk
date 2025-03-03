@@ -30,6 +30,14 @@ func (nol *NestedOrderedList[K1, K2, V]) GetInnerOrderedList(key1 K1) *OrderedLi
 	}
 }
 
+func (nol *NestedOrderedList[K1, K2, V]) OuterKeys() (keys []K1) {
+	for _, list := range nol.lists {
+		keys = append(keys, list.key)
+	}
+
+	return
+}
+
 func (nol *NestedOrderedList[K1, K2, V]) Get(key1 K1, key2 K2) (V, bool) {
 	index1, index2, has := nol.GetIndex(key1, key2)
 	if !has {
