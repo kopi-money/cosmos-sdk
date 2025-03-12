@@ -1,8 +1,6 @@
 module cosmossdk.io/simapp
 
-go 1.23.5
-
-toolchain go1.24.0
+go 1.21
 
 require (
 	cosmossdk.io/api v0.7.6
@@ -31,7 +29,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/protobuf v1.36.3
+	google.golang.org/protobuf v1.35.1
 )
 
 require (

@@ -1,10 +1,8 @@
 package gov
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/cache"
 	"time"
 
 	"cosmossdk.io/collections"
@@ -172,22 +170,16 @@ func EndBlocker(ctx sdk.Context, keeper *keeper.Keeper) error {
 			}
 
 			// execute all messages
-			err = cache.Transact(cacheCtx, func(innerCtx context.Context) error {
-				for idx, msg = range messages {
-					handler := keeper.Router().Handler(msg)
-					var res *sdk.Result
-
-					sdkCtx := sdk.UnwrapSDKContext(innerCtx)
-					res, err = safeExecuteHandler(sdkCtx, msg, handler)
-					if err != nil {
-						return err
-					}
-
-					events = append(events, res.GetEvents()...)
+			for idx, msg = range messages {
+				handler := keeper.Router().Handler(msg)
+				var res *sdk.Result
+				res, err = safeExecuteHandler(cacheCtx, msg, handler)
+				if err != nil {
+					break
 				}
 
-				return nil
-			})
+				events = append(events, res.GetEvents()...)
+			}
 
 			// `err == nil` when all handlers passed.
 			// Or else, `idx` and `err` are populated with the msg index and error.
