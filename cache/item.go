@@ -171,7 +171,7 @@ func (ic *ItemCache[V]) loadFromStorage(goCtx context.Context) (Entry[V], bool) 
 	ctx = ctx.WithGasMeter(gasMeter)
 
 	if err != nil {
-		ctx.Logger().Error(fmt.Sprintf("%v: %v", ic.name, err.Error()))
+		ctx.Logger().Warn(fmt.Sprintf("%v: %v", ic.name, err.Error()))
 		return Entry[V]{}, false
 	}
 
@@ -229,7 +229,7 @@ func (ic *ItemCache[V]) CommitToDB(ctx context.Context) error {
 	if itemTransaction != nil {
 		if itemTransaction.change.value != nil {
 			if err := ic.collection.Set(ctx, *itemTransaction.change.value); err != nil {
-				sdk.UnwrapSDKContext(ctx).Logger().Error(fmt.Sprintf("%v: collection set: %w", ic.name, err))
+				sdk.UnwrapSDKContext(ctx).Logger().Warn(fmt.Sprintf("%v: collection set: %w", ic.name, err))
 				return err
 			}
 		} else {
