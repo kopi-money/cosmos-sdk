@@ -311,6 +311,7 @@ func (nmc *NestedMapCache[K1, K2, V]) Iterator(ctx context.Context, rng collecti
 	}
 
 	createIterator := func() Iterator[K2, V] {
+		rng = collections.NewPrefixedPairRange[K1, K2](key1)
 		iterator, _ := nmc.collection.Iterate(ctx, rng)
 		return NestedIterator[K1, K2, V]{
 			iterator: iterator,
