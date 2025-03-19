@@ -141,8 +141,23 @@ func NewNestedMapCache[K1, K2 ordered, V any](sb *collections.SchemaBuilder, pre
 	return mc
 }
 
-func (nmc *NestedMapCache[K1, K2, V]) OuterKeys() []K1 {
-	return nmc.cache.OuterKeys()
+func (nmc *NestedMapCache[K1, K2, V]) OuterKeys(ctx context.Context) ([]K1, error) {
+	iterator, err := nmc.collection.Iterate(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("nmc.collection.Iterate: %w", err)
+	}
+	
+	keys, err := iterator.Keys()
+	if err != nil {
+		return nil, fmt.Errorf("iterator.Keys: %w", err)
+	}
+
+	var outerKeys []K1
+	for _, key := range keys {
+		outerKeys = append(outerKeys, key.K1())
+	}
+
+	return keys, nil
 }
 
 func (nmc *NestedMapCache[K1, K2, V]) NumRunningTransactions() int {
