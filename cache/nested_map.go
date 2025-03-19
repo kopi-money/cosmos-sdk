@@ -146,7 +146,7 @@ func (nmc *NestedMapCache[K1, K2, V]) OuterKeys(ctx context.Context) ([]K1, erro
 	if err != nil {
 		return nil, fmt.Errorf("nmc.collection.Iterate: %w", err)
 	}
-	
+
 	keys, err := iterator.Keys()
 	if err != nil {
 		return nil, fmt.Errorf("iterator.Keys: %w", err)
@@ -157,7 +157,7 @@ func (nmc *NestedMapCache[K1, K2, V]) OuterKeys(ctx context.Context) ([]K1, erro
 		outerKeys = append(outerKeys, key.K1())
 	}
 
-	return keys, nil
+	return outerKeys, nil
 }
 
 func (nmc *NestedMapCache[K1, K2, V]) NumRunningTransactions() int {
