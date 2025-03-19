@@ -30,6 +30,26 @@ func (nol *NestedOrderedList[K1, K2, V]) GetInnerOrderedList(key1 K1) *OrderedLi
 	}
 }
 
+func (nol *NestedOrderedList[K1, K2, V]) Keys() (keys NestedOrderedList[K1, K2, struct{}]) {
+	for _, innerList := range nol.lists {
+		var innerKeys []KeyValue[K2, struct{}]
+
+		for _, innerEntry := range innerList.value {
+			innerKeys = append(innerKeys, KeyValue[K2, struct{}]{
+				key:   innerEntry.key,
+				value: struct{}{},
+			})
+		}
+
+		keys.lists = append(keys.lists, KeyValue[K1, []KeyValue[K2, struct{}]]{
+			key:   innerList.key,
+			value: innerKeys,
+		})
+	}
+
+	return
+}
+
 func (nol *NestedOrderedList[K1, K2, V]) Get(key1 K1, key2 K2) (V, bool) {
 	index1, index2, has := nol.GetIndex(key1, key2)
 	if !has {

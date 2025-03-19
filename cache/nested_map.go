@@ -142,6 +142,38 @@ func NewNestedMapCache[K1, K2 ordered, V any](sb *collections.SchemaBuilder, pre
 }
 
 func (nmc *NestedMapCache[K1, K2, V]) OuterKeys(ctx context.Context) ([]K1, error) {
+	if useCache(ctx, nmc.currentHeight) {
+		return nmc.outerKeysFromCache(ctx)
+	} else {
+		return nmc.outerKeysFromStorage(ctx)
+	}
+}
+
+func (nmc *NestedMapCache[K1, K2, V]) outerKeysFromCache(ctx context.Context) ([]K1, error) {
+	keys := nmc.cache.Keys()
+
+	txKey := getTXKey(ctx)
+	if txKey != nil {
+		for _, outerChangeList := range nmc.transactions.Get(*txKey).changes.lists {
+			for _, change := range outerChangeList.value {
+				if change.value.value != nil {
+					keys.Set(outerChangeList.key, change.key, struct{}{})
+				} else {
+					keys.Remove(outerChangeList.key, change.key)
+				}
+			}
+		}
+	}
+
+	var outerKeys []K1
+	for _, innerList := range keys.lists {
+		outerKeys = append(outerKeys, innerList.key)
+	}
+
+	return outerKeys, nil
+}
+
+func (nmc *NestedMapCache[K1, K2, V]) outerKeysFromStorage(ctx context.Context) ([]K1, error) {
 	iterator, err := nmc.collection.Iterate(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("nmc.collection.Iterate: %w", err)
@@ -306,8 +338,10 @@ func (nmc *NestedMapCache[K1, K2, V]) Remove(ctx context.Context, key1 K1, key2 
 // have to be loaded from storage first. Then interim changes to the data have to be applied to the keys, i.e.
 // adding new ones or removes those that have been deleted. If new keys are added, the list has to be sorted once more.
 func (nmc *NestedMapCache[K1, K2, V]) Iterator(ctx context.Context, rng collections.Ranger[collections.Pair[K1, K2]], key1 K1) Iterator[K2, V] {
-	var changes *OrderedList[K2, Entry[V]]
-	var removals []K2
+	var (
+		changes  *OrderedList[K2, Entry[V]]
+		removals []K2
+	)
 
 	txKey := getTXKey(ctx)
 	if txKey != nil {

@@ -1,17 +1,15 @@
-package cache_test
+package cache
 
 import (
 	"context"
-	"github.com/cosmos/cosmos-sdk/cache"
 	"testing"
 
 	"cosmossdk.io/collections"
-	"github.com/cosmos/cosmos-sdk/testutil"
 	"github.com/stretchr/testify/require"
 )
 
-func createMapCache() (context.Context, *cache.MapCache[string, uint64]) {
-	store, ctx := testutil.Deps()
+func createMapCache() (context.Context, *MapCache[string, uint64]) {
+	store, ctx := Deps()
 	sb := collections.NewSchemaBuilder(store)
 
 	mapCache := NewMapCache[string, uint64](

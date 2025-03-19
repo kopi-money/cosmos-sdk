@@ -5,12 +5,11 @@ import (
 	"testing"
 
 	"cosmossdk.io/collections"
-	"github.com/cosmos/cosmos-sdk/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func createNestedMapCache() (context.Context, *NestedMapCache[string, string, uint64]) {
-	store, ctx := testutil.CacheDeps()
+	store, ctx := Deps()
 	sb := collections.NewSchemaBuilder(store)
 
 	mapCache := NewNestedMapCache[string, string, uint64](
@@ -107,4 +106,21 @@ func TestNestedMap5(t *testing.T) {
 	iterator := nestedMapCache.Iterator(tx2, nil, "a")
 	values := iterator.GetAll()
 	require.Equal(t, 0, len(values))
+}
+
+func TestNestedMap6(t *testing.T) {
+	ctx, nestedMapCache := createNestedMapCache()
+	tx1 := NewCacheContext(ctx, 1, true)
+	defer TransactionHandler.ClearTransactions()
+
+	nestedMapCache.Set(tx1, "a", "a", 0)
+	outerKeys, err := nestedMapCache.OuterKeys(tx1)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(outerKeys))
+
+	nestedMapCache.Remove(tx1, "a", "a")
+
+	outerKeys, err = nestedMapCache.OuterKeys(tx1)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(outerKeys))
 }
