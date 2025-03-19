@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 
 	"cosmossdk.io/collections"
@@ -165,10 +166,19 @@ func (nmc *NestedMapCache[K1, K2, V]) outerKeysFromCache(ctx context.Context) ([
 		}
 	}
 
-	var outerKeys []K1
+	outerKeysMap := make(map[K1]struct{})
 	for _, innerList := range keys.lists {
-		outerKeys = append(outerKeys, innerList.key)
+		outerKeysMap[innerList.key] = struct{}{}
 	}
+
+	var outerKeys []K1
+	for key := range outerKeysMap {
+		outerKeys = append(outerKeys, key)
+	}
+
+	sort.SliceStable(outerKeys, func(i, j int) bool {
+		return outerKeys[i] < outerKeys[j]
+	})
 
 	return outerKeys, nil
 }
@@ -184,10 +194,19 @@ func (nmc *NestedMapCache[K1, K2, V]) outerKeysFromStorage(ctx context.Context) 
 		return nil, fmt.Errorf("iterator.Keys: %w", err)
 	}
 
-	var outerKeys []K1
+	outerKeysMap := make(map[K1]struct{})
 	for _, key := range keys {
-		outerKeys = append(outerKeys, key.K1())
+		outerKeysMap[key.K1()] = struct{}{}
 	}
+
+	var outerKeys []K1
+	for key := range outerKeysMap {
+		outerKeys = append(outerKeys, key)
+	}
+
+	sort.SliceStable(outerKeys, func(i, j int) bool {
+		return outerKeys[i] < outerKeys[j]
+	})
 
 	return outerKeys, nil
 }
