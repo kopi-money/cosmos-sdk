@@ -193,8 +193,7 @@ func (mc *MapCache[K, V]) IterateRaw(ctx context.Context, start, end []byte, ord
 }
 
 func (mc *MapCache[K, V]) KeyCodec() codec.KeyCodec[K] {
-	//TODO implement me
-	panic("implement me")
+	return mc.kc
 }
 
 func NewMapCache[K ordered, V any](sb *collections.SchemaBuilder, prefix []byte, name string, kc codec.KeyCodec[K], vc codec.ValueCodec[V], caches *Caches) *MapCache[K, V] {
