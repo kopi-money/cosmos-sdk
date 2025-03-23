@@ -37,6 +37,11 @@ func (ni NestedIterator[K1, K2, V]) GetNextKeyValue() KeyValue[K2, Entry[V]] {
 	}
 }
 
-func (ni NestedIterator[K1, K2, V]) GetAllFromCache() []KeyValue[K2, Entry[V]] {
-	panic("implement me")
+func (ni NestedIterator[K1, K2, V]) GetAllFromCache() (list []KeyValue[K2, Entry[V]]) {
+	for ni.Valid() {
+		keyValue := ni.GetNextKeyValue()
+		list = append(list, keyValue)
+	}
+
+	return
 }
