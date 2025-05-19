@@ -172,16 +172,14 @@ func EndBlocker(ctx sdk.Context, keeper *keeper.Keeper) error {
 			}
 
 			// execute all messages
-			// execute all messages
 			err = cache.Transact(cacheCtx, func(innerCtx context.Context) error {
+				sdkCtx := sdk.UnwrapSDKContext(innerCtx)
+
 				for idx, msg = range messages {
 					handler := keeper.Router().Handler(msg)
-					var res *sdk.Result
-
-					sdkCtx := sdk.UnwrapSDKContext(innerCtx)
-					res, err = safeExecuteHandler(sdkCtx, msg, handler)
+					res, err := safeExecuteHandler(sdkCtx, msg, handler)
 					if err != nil {
-						return err
+						return fmt.Errorf("proposal msg %v: %w", idx, err)
 					}
 
 					events = append(events, res.GetEvents()...)
