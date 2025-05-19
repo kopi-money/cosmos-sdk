@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"cosmossdk.io/collections"
@@ -9,7 +10,7 @@ import (
 )
 
 func createMapCache() (context.Context, *MapCache[string, uint64]) {
-	store, ctx := Deps()
+	ctx, store := Deps()
 	sb := collections.NewSchemaBuilder(store)
 
 	mapCache := NewMapCache[string, uint64](
@@ -163,6 +164,7 @@ func TestMap8(t *testing.T) {
 	tx := NewCacheContext(ctx, 1, true)
 	defer TransactionHandler.ClearTransactions()
 	AddCache(mapCache)
+	defer RemoveCache(mapCache)
 
 	mapCache.initialized = true
 	mapCache.Set(tx, "a", 1)
@@ -185,6 +187,7 @@ func TestMap9(t *testing.T) {
 	tx1 := NewCacheContext(ctx, 1, true)
 	defer TransactionHandler.ClearTransactions()
 	AddCache(mapCache)
+	defer RemoveCache(mapCache)
 
 	mapCache.initialized = true
 	mapCache.Set(tx1, "a", 1)
@@ -200,4 +203,56 @@ func TestMap9(t *testing.T) {
 
 	v, _ := mapCache.Get(ctx, "a")
 	require.Equal(t, uint64(1), v)
+}
+
+func TestMap10(t *testing.T) {
+	ctx, mapCache := createMapCache()
+	AddCache(mapCache)
+	defer RemoveCache(mapCache)
+
+	require.NoError(t, Transact(ctx, func(innerCtx context.Context) error {
+		mapCache.Set(innerCtx, "a", 1)
+		return nil
+	}))
+
+	_, has := mapCache.Get(ctx, "a")
+	require.True(t, has)
+}
+
+func TestMap11(t *testing.T) {
+	ctx, mapCache := createMapCache()
+	AddCache(mapCache)
+	defer RemoveCache(mapCache)
+
+	require.Error(t, Transact(ctx, func(innerCtx context.Context) error {
+		mapCache.Set(innerCtx, "a", 1)
+		return fmt.Errorf("")
+	}))
+
+	_, has := mapCache.Get(ctx, "a")
+	require.False(t, has)
+}
+
+func TestMap12(t *testing.T) {
+	ctx, mapCache := createMapCache()
+	AddCache(mapCache)
+	defer RemoveCache(mapCache)
+
+	require.NoError(t, Transact(ctx, func(innerCtx context.Context) error {
+		mapCache.Set(innerCtx, "a", 1)
+		return nil
+	}))
+
+	value, has := mapCache.Get(ctx, "a")
+	require.True(t, has)
+	require.Equal(t, uint64(1), value)
+
+	require.Error(t, Transact(ctx, func(innerCtx context.Context) error {
+		mapCache.Set(innerCtx, "a", 2)
+		return fmt.Errorf("")
+	}))
+
+	value, has = mapCache.Get(ctx, "a")
+	require.True(t, has)
+	require.Equal(t, uint64(1), value)
 }

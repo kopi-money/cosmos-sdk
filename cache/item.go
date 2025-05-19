@@ -242,25 +242,25 @@ func (ic *ItemCache[V]) CommitToDB(ctx context.Context) error {
 	return nil
 }
 
-func (ic *ItemCache[V]) Rollback(goCtx context.Context) {
-	txKey := getTXKey(goCtx)
+func (ic *ItemCache[V]) Rollback(ctx context.Context) {
+	txKey := getTXKey(ctx)
 	if txKey == nil {
 		panic("Rollback without cache transaction")
 	}
 
 	itemTransaction := ic.transactions.Get(*txKey)
 	if itemTransaction != nil {
-		ctx := sdk.UnwrapSDKContext(goCtx)
-		gasMeter := ctx.GasMeter()
-		ctx = ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		gasMeter := sdkCtx.GasMeter()
+		sdkCtx = sdkCtx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 		if itemTransaction.previous != nil && itemTransaction.previous.value != nil {
-			_ = ic.collection.Set(ctx, *itemTransaction.previous.value)
+			_ = ic.collection.Set(sdkCtx, *itemTransaction.previous.value)
 		} else {
-			_ = ic.collection.Remove(ctx)
+			_ = ic.collection.Remove(sdkCtx)
 		}
 
-		ctx = ctx.WithGasMeter(gasMeter)
+		sdkCtx = sdkCtx.WithGasMeter(gasMeter)
 	}
 }
 

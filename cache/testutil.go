@@ -3,10 +3,16 @@ package cache
 import (
 	"bytes"
 	"context"
+	"cosmossdk.io/log"
+	st "cosmossdk.io/store"
+	"cosmossdk.io/store/metrics"
 	"errors"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"cosmossdk.io/core/store"
 	storetypes "cosmossdk.io/store/types"
+	dbm "github.com/cosmos/cosmos-db"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tidwall/btree"
 )
 
@@ -33,17 +39,6 @@ func (dc *DummyCtx) WithGasMeter(gasMeter storetypes.GasMeter) context.Context {
 func (dc *DummyCtx) GetStore(key string) (store.KVStore, bool) {
 	s, ok := dc.stores[key]
 	return s, ok
-}
-
-func Deps() (store.KVStoreService, context.Context) {
-	ctx := &DummyCtx{
-		Context:  context.Background(),
-		stores:   map[string]store.KVStore{},
-		gasMeter: storetypes.NewInfiniteGasMeter(),
-	}
-	kv := KVStoreService(ctx)
-
-	return kv, ctx
 }
 
 const (
@@ -290,13 +285,6 @@ func (mi *memIterator) assertValid() {
 	}
 }
 
-func KVStoreService(ctx *DummyCtx) store.KVStoreService {
-	ctx.stores["test"] = newMemDB()
-	return kvStoreService{
-		moduleName: "test",
-	}
-}
-
 type kvStoreService struct {
 	moduleName string
 }
@@ -306,16 +294,24 @@ type BaseGetter interface {
 }
 
 func (k kvStoreService) OpenKVStore(goCtx context.Context) store.KVStore {
-	ctx, ok := goCtx.(BaseGetter)
-	if !ok {
-		panic("could not get base")
+	kvStore, has := goCtx.Value("store").(store.KVStore)
+	if !has {
+		panic(errors.New("store not found in context"))
 	}
 
-	kv, ok := ctx.Base().(StoreGetter)
-	if !ok {
-		panic("could not get store")
+	return kvStore
+}
+
+func Deps() (sdk.Context, store.KVStoreService) {
+	db := dbm.NewMemDB()
+	stateStore := st.NewCommitMultiStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+	sdkCtx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
+	sdkCtx = sdkCtx.WithGasMeter(storetypes.NewInfiniteGasMeter())
+	sdkCtx = sdkCtx.WithValue("store", newMemDB())
+
+	kv := kvStoreService{
+		moduleName: "test",
 	}
 
-	s, _ := kv.GetStore(k.moduleName)
-	return s
+	return sdkCtx, kv
 }

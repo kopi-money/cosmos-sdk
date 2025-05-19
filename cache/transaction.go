@@ -45,6 +45,18 @@ func AddCaches(caches Caches) {
 	TransactionHandler.caches = append(TransactionHandler.caches, caches...)
 }
 
+// RemoveCache is only used in testing
+func RemoveCache(toRemove Cache) {
+	var newCaches []Cache
+	for _, cache := range TransactionHandler.caches {
+		if cache != toRemove {
+			newCaches = append(newCaches, cache)
+		}
+	}
+
+	TransactionHandler.caches = newCaches
+}
+
 func (t *transactionHandler) createKey(height int64, finalizing bool) *TXKey {
 	t.muKey.Lock()
 	defer t.muKey.Unlock()

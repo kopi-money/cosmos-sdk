@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"cosmossdk.io/collections"
@@ -9,7 +10,7 @@ import (
 )
 
 func createNestedMapCache() (context.Context, *NestedMapCache[string, string, uint64]) {
-	store, ctx := Deps()
+	ctx, store := Deps()
 	sb := collections.NewSchemaBuilder(store)
 
 	mapCache := NewNestedMapCache[string, string, uint64](
@@ -123,4 +124,37 @@ func TestNestedMap6(t *testing.T) {
 	outerKeys, err = nestedMapCache.OuterKeys(tx1)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(outerKeys))
+}
+
+func TestNestedMap7(t *testing.T) {
+	ctx, nestedMapCache := createNestedMapCache()
+	AddCache(nestedMapCache)
+	defer RemoveCache(nestedMapCache)
+
+	require.NoError(t, Transact(ctx, func(innerCtx context.Context) error {
+		nestedMapCache.Set(innerCtx, "a", "a", 0)
+		return nil
+	}))
+
+	value, has := nestedMapCache.Get(ctx, "a", "a")
+	require.True(t, has)
+	require.Equal(t, uint64(0), value)
+
+	require.NoError(t, Transact(ctx, func(innerCtx context.Context) error {
+		nestedMapCache.Set(innerCtx, "a", "a", 1)
+		return nil
+	}))
+
+	value, has = nestedMapCache.Get(ctx, "a", "a")
+	require.True(t, has)
+	require.Equal(t, uint64(1), value)
+
+	require.Error(t, Transact(ctx, func(innerCtx context.Context) error {
+		nestedMapCache.Set(innerCtx, "a", "a", 2)
+		return fmt.Errorf("")
+	}))
+
+	value, has = nestedMapCache.Get(ctx, "a", "a")
+	require.True(t, has)
+	require.Equal(t, uint64(1), value)
 }
